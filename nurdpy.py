@@ -52,7 +52,6 @@ def denton_ne_eq( ne, L, R ):
 	# of L, R and ne otherwise stick with ne
 	ne_eq = np.where( np.logical_or(R < 2.0, L < 2.5), ne, ne_eq)
 	ne_eq = np.where( np.logical_or(ne > 1500.0, ne_eq > ne ), ne, ne_eq)
-	ne_eq = ne
 	
 	return ne_eq
 
