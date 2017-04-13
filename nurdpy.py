@@ -10,18 +10,18 @@ def read_cdf(filename, \
 
 	fullpath_filename = pathname + filename
 	if not os.path.isfile( fullpath_filename ):
-		print("file not found")
+		print("File Not Found")
 		return -1
 		
 	data = pycdf.CDF(fullpath_filename)
 
 	nurd = pd.DataFrame( data['Epoch'][:], columns=['UT'])
-	nurd['L'] = pd.Series( data['L'][:] )
-	nurd['MLT'] = pd.Series( data['MLT'][:] )
-	nurd['MLAT'] = pd.Series( data['magLat'][:] )
-	nurd['R'] = pd.Series(np.sqrt(data['x_sm'][:]**2 + data['y_sm'][:]**2 + \
-		data['z_sm'][:]**2) )
-	nurd['ne'] = pd.Series( data['density'][:] )
+	nurd['L'] = data['L'][:] 
+	nurd['MLT'] = data['MLT'][:] 
+	nurd['MLAT'] = data['magLat'][:] 
+	nurd['R'] = np.sqrt(data['x_sm'][:]**2 + data['y_sm'][:]**2 + \
+		data['z_sm'][:]**2) 
+	nurd['ne'] = data['density'][:] 
 
 	# Store metadata as attributes
 	nurd.spacecraft = 'RBSP-a'
@@ -78,7 +78,7 @@ def plot_density_psphere( nurd ):
 
 	return
 
-filename = 'rbsp-a_orbit_2624_v1_3.cdf';
+filename = 'rbsp-a_orbit_2628_v1_3.cdf';
 
 nurd = read_cdf( filename )
 nurd['ne_eq'] = denton_ne_eq(nurd['ne'], nurd['L'], nurd['R'] );
