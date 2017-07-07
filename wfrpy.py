@@ -1,13 +1,15 @@
 import os
+import glob
+import time
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from spacepy import pycdf
 
-# Read CDF file and create WFR dataframe
+# Read CDF file and create WFR dictionaryj
 def read_cdf( filename, \
-	pathname = '/Users/mystical/data/spacecraft/rbsp/rbsp-a/' + \
+	pathname = '/Users/mystical/Work/Science/RBSP/DataCdf/rbsp-a/' + \
 	'wfr_spectral_matrix_diagonal_L2/'):
 
 	fullpath_filename = pathname + filename
@@ -18,6 +20,7 @@ def read_cdf( filename, \
 	data = pycdf.CDF(fullpath_filename)
 
 	UT = data['Epoch'][:]
+	timestamp = pd.Series(UT).apply( lambda x: time.mktime(x.timetuple())  )
 	freq = data['WFR_frequencies'][0][:]
 	freq_bw = data['WFR_bandwidth'][0][:]
 
@@ -31,9 +34,11 @@ def read_cdf( filename, \
 	BB_units = 'nT$^2$/Hz'
 	description = 'RBSP-A EMFISIS WFR'
 
-	wfr = {'UT': UT, 'freq': freq, 'freq_bw': freq_bw, 'BB': BB, \
+	wfr = {'UT': UT, 'timestamp': timestamp, 'freq': freq, 'freq_bw': freq_bw, 'BB': BB, \
 		'freq_units': freq_units, 'BB_units': BB_units, \
 		'description': description}
+
+	data.close()
 
 	return wfr
 
@@ -61,10 +66,31 @@ def plot_BB( wfr ):
 		wfr['BB_units'])
 	plt.show(block=False)
 
+def load_day( datestr ):
+	pathname = '/Users/mystical/Work/Science/RBSP/DataCdf/rbsp-a/' + \
+	'wfr_spectral_matrix_diagonal_L2/'
+	filename_start = 'rbsp-a_WFR-spectral-matrix-diagonal_emfisis-L2_'
+	filename_end = '.cdf'
+
+	filename_wild = filename_start + datestr + '*' + filename_end
+	filename = glob.glob( pathname + filename_wild )
+	if not filename:
+		print('WFR file not found: ' + pathname + filename_wild)
+		return -1
+	else:
+		# Remove pathname and read cdf file
+		filename = filename[0].replace(pathname, '')
+		wfr = read_cdf( filename )
+
+	return wfr
+
+	
+
 
 # exec(open('wfrpy.py').read())
 
-filename = 'rbsp-a_WFR-spectral-matrix-diagonal_emfisis-L2_20160710_v1.6.4.cdf'
-wfr = read_cdf(filename)
-plot_BB(wfr)
+#filename = 'rbsp-a_WFR-spectral-matrix-diagonal_emfisis-L2_20160710_v1.6.4.cdf'
+#datestr = '20160710'
+#wfr = load_day(datestr)
+#plot_BB(wfr)
 
