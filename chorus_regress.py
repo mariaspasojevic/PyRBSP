@@ -80,27 +80,29 @@ def regress_kp( all_kp, max_kp=6, order=4, band='Lower' ):
 	else:
 		plt_num = 2
 
-	fig1 = plt.figure(1 if band=='Lower' else 2)
+	fig1 = plt.figure(num=1 if band=='Lower' else 2, figsize=(8,4) )
 	fig1.clf()
 	ax1 = fig1.add_subplot(131)
-	ax1.plot( all_kp.kp, all_kp.BB, 'bo-')
+	ax1.plot( all_kp.kp, np.log10(all_kp.BB), 'bo-')
 	ax1.set_ylabel('log(Bw2, pT2)')
+	ax1.set_title( band + ' Band Chorus' )
 
 	ax2 = fig1.add_subplot(132)
-	ax2.plot( X, y, 'bo')
-	ax2.plot( X, model.predict(X), 'k')
-	ax2.set_title( band + ' Band Chorus' )
+	ax2.plot( X, np.log10(y), 'bo')
+	ax2.plot( X, np.log10(model.predict(X)), 'k')
+	ax2.set_title( 'g_0(Kp)')
 	ax2.set_xlabel('Kp')
 
 	ax3 = fig1.add_subplot(133)
 	ax3.plot( X, g(X), 'k')
 	ax3.set_ylabel('Unitless Scaling Factor')
+	ax3.set_title( 'g(Kp)')
 
 	fig1.tight_layout()
 	plt.show(block=False)
 	plt.draw()
 
-	plt.savefig( 'regress_kp' + str.lower(band) + '.pdf' )
+	plt.savefig( 'regress_kp_' + str.lower(band) + '.pdf' )
 
 	return w, G_0, feat_names
 
@@ -212,7 +214,7 @@ def regress( X, band='Lower'):
 	model = LinearRegression(fit_intercept=False)
 	model.fit( X_new, y )
 
-	fig1 = plt.figure(3 if band=='Lower' else 4)
+	fig1 = plt.figure(num=3 if band=='Lower' else 4, figsize=(10,10) )
 	fig1.clf()
 	q = 1
 
@@ -287,25 +289,59 @@ def regress( X, band='Lower'):
 
 	return model, feat_names
 
+def write_kp_coef( kp_coef, kp_G0, kp_feat_names, filename ):
+
+	import csv
+	with open(filename, 'w') as csvfile:
+
+		csvwriter = csv.writer(csvfile)
+		csvwriter.writerow(['G0'] + [x.replace('x0', 'Kp') for x in kp_feat_names] )
+		csvwriter.writerow( [str(kp_G0)] + [str(x) for x in kp_coef] )
+			
+def write_mlt_L_mlat_coef( coef, feat_names, filename ):
+
+	import csv
+	with open(filename, 'w') as csvfile:
+
+		csvwriter = csv.writer(csvfile)
+
+		for i, x in enumerate( feat_names ):
+			feat_names[i] = feat_names[i].replace('x0', 'cos(MLT)')
+			feat_names[i] = feat_names[i].replace('x1', 'sin(MLT)')
+			feat_names[i] = feat_names[i].replace('x2', 'L')
+			feat_names[i] = feat_names[i].replace('x3', 'MLAT')
+
+		csvwriter.writerow(feat_names)
+		csvwriter.writerow( [str(x) for x in coef] )
+		
+	
+		
 
 # exec(open('chorus_regress.py').read())
 
-#upper = load_pickles( type = 'upper' )
-#upper['kp'] = interp_kp( upper['timestamp'] )
-#upper_kp = avg_kp( upper )
-#upper_kp_coef, upper_kp_G0, upper_kp_feat_names = regress_kp( upper_kp, max_kp=6, band='Upper' )
+upper = load_pickles( type = 'upper' )
+upper['kp'] = interp_kp( upper['timestamp'] )
+
+upper_kp = avg_kp( upper )
+upper_kp_coef, upper_kp_G0, upper_kp_feat_names = regress_kp( upper_kp, max_kp=6, band='Upper' )
+write_kp_coef( upper_kp_coef, upper_kp_G0, upper_kp_feat_names, 'upper_g_coef.csv' )
 
 X_upper  = avg_bb( upper )
 upper_model, upper_feat_names = regress( X_upper, 'Upper')
+write_mlt_L_mlat_coef( upper_model.coef_, upper_feat_names, 'upper_f_coef.csv' )
 
-#lower = load_pickles( type = 'lower' )
-#lower['kp'] = interp_kp( lower['timestamp'] )
-#lower_kp = avg_kp( lower )
-#lower_kp_coef, lower_kp_G0, lower_kp_feat_names = regress_kp( lower_kp, max_kp=6, band='Lower' )
+
+
+lower = load_pickles( type = 'lower' )
+lower['kp'] = interp_kp( lower['timestamp'] )
+
+lower_kp = avg_kp( lower )
+lower_kp_coef, lower_kp_G0, lower_kp_feat_names = regress_kp( lower_kp, max_kp=6, band='Lower' )
+write_kp_coef( lower_kp_coef, lower_kp_G0, lower_kp_feat_names, 'lower_g_coef.csv' )
 
 X_lower = avg_bb( lower )
 lower_model, lower_feat_names = regress( X_lower, band='Lower')
-
+write_mlt_L_mlat_coef( lower_model.coef_, lower_feat_names, 'lower_f_coef.csv' )
 
 
 
