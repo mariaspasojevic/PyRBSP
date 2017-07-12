@@ -9,6 +9,7 @@ import magpy
 import nurdpy
 
 
+# LOAD ALL DATA FOR ONE DAY
 def load_day( datestr ):
 
 	wfr = wfrpy.load_day(datestr)
@@ -38,6 +39,7 @@ def load_day( datestr ):
 	return wfr
 
 
+# CALCULATE INTEGRATED WAVE AMPLITUDE FOR UPPER AND LOWER BAND CHORUS
 def extract_day( wfr, f_lb_lower = 0.05, f_lb_upper = 0.5, f_ub_lower = 0.5, f_ub_upper = 0.8 ):
 	
 	lower = pd.DataFrame( columns=['timestamp', 'L', 'mlat', 'mlt', 'BB'] )
@@ -75,6 +77,7 @@ def extract_day( wfr, f_lb_lower = 0.05, f_lb_upper = 0.5, f_ub_lower = 0.5, f_u
 
 	return lower, upper
 
+# LOOP DAY BY DAY PERFORMING CHORUS EXTRACTION
 def extract_range( start_date, end_date ):
 	lower = pd.DataFrame( columns=['timestamp', 'L', 'mlat', 'mlt', 'BB'] )
 	upper = pd.DataFrame( columns=['timestamp', 'L', 'mlat', 'mlt', 'BB'] )
@@ -103,6 +106,7 @@ def extract_range( start_date, end_date ):
 
 # exec(open('extract_chorus.py').read())
 
+# EXAMPLE OF RUNNING THIS MODULE
 ##### 2013
 #lower = pd.DataFrame( columns=['timestamp', 'L', 'mlat', 'mlt', 'BB'] )
 #upper = pd.DataFrame( columns=['timestamp', 'L', 'mlat', 'mlt', 'BB'] )
