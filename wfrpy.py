@@ -1,3 +1,12 @@
+"""
+wfrpy.py
+
+This module contains functionality for handling WFR data from the
+RBSP EMFISIS intrument
+
+http://emfisis.physics.uiowa.edu/
+"""
+
 import os
 import glob
 import time
@@ -7,10 +16,19 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from spacepy import pycdf
 
-# Read CDF file and create WFR dictionaryj
 def read_cdf( filename, \
 	pathname = '/Users/mystical/Work/Science/RBSP/DataCdf/rbsp-a/' + \
 	'wfr_spectral_matrix_diagonal_L2/'):
+	"""	
+	read_cdf( filename, pathname = [default location])
+
+	Reads WFR diagonal elements of the cross spectral matrix CDF as downloaded
+	from: http://emfisis.physics.uiowa.edu/data/index
+
+	Input: filename, pathname strings
+	Output: wfr dictionary with keys UT [datetime], timestamp, freq, freq_bw,
+					BB=BxBx + ByBy + BzBz, freq_units, BB_units, description
+	"""
 
 	fullpath_filename = pathname + filename
 	if not os.path.isfile( fullpath_filename ):
@@ -42,8 +60,8 @@ def read_cdf( filename, \
 
 	return wfr
 
-# Create plot of BB as a function of freq and UT
 def plot_BB( wfr ):
+	""" plot_BB( wfr ) Creates a plot of BB as function of freq and UT """
 
 	fig, ax = plt.subplots()
 
@@ -67,6 +85,14 @@ def plot_BB( wfr ):
 	plt.show(block=False)
 
 def load_day( datestr ):
+	"""
+	load_day( datestr ):
+
+	Give a datestr as 'YYYYMMDD' finds the corresponding WFR file
+	loads it and returns the wfr dictionary using read_cdf() otherwise
+	returns -1 if no file is available
+	"""
+
 	pathname = '/Users/mystical/Work/Science/RBSP/DataCdf/rbsp-a/' + \
 	'wfr_spectral_matrix_diagonal_L2/'
 	filename_start = 'rbsp-a_WFR-spectral-matrix-diagonal_emfisis-L2_'

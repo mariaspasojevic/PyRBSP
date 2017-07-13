@@ -1,3 +1,10 @@
+"""
+Functionality for working with plasma density data created by the 
+NURD algorithm
+
+See Zhelavskaya et al., 2016, doi:10.1002/2015JA022132
+"""
+
 import os
 import glob
 import time
@@ -6,9 +13,20 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from spacepy import pycdf
 
-# Read CDF file and create nurd dataframe
 def read_cdf(filename, \
 	pathname='/Users/mystical/Work/Science/RBSP/DataCdf/rbsp-a/nurd/'):
+	"""
+	read_cdf(filename, \
+		pathname='/Users/mystical/Work/Science/RBSP/DataCdf/rbsp-a/nurd/')
+
+	Read NURD cdf file as downloaded from:
+		ftp://rbm.epss.ucla.edu/ftpdisk1/NURD
+
+	Input: filename string, pathname string
+	Output: nurd dataframe with columns ['UT' [datetime], 'timestamp',
+					'L', 'MLT', 'MLAT', 'R', 'ne'] otherwise -1 if cdf file
+					not found.
+	"""
 
 	fullpath_filename = pathname + filename
 	if not os.path.isfile( fullpath_filename ):
@@ -26,29 +44,46 @@ def read_cdf(filename, \
 		data['z_sm'][:]**2) 
 	nurd['ne'] = data['density'][:] 
 
+	# Drop undefined location values
+	nurd.drop(np.where( np.isnan(nurd.L) )[0], inplace=True)
+
 	# Store metadata as attributes
-	# DOESN'T REALLY WORK, GETS ERASES BY SOME FUNCTIONS
+	# DOESN'T ACTUALLY WORK, GETS ERASED BY OTHER PANDAS FUNCTIONS
 	nurd.spacecraft = 'RBSP-a'
 
 	data.close()
 
 	return nurd
 
-# Returns a boolean array of whether the density is inside 
-# or outside the plasmapause defined as 100 cm^-3 
-# at L=4 and scaled as L^-4
 def find_psphere(ne_eq, L):
+	"""
+	find_psphere(ne_eq, L)
+
+	Returns a boolean array of whether the density is inside 
+	or outside the plasmapause defined as 100 cm^-3 
+	at L=4 and scaled as L^-4
+
+	Inputs: ne_eq, L arrays of equatorial density values and L-shell
+	Outputs: pshere boolean array of whether point is inside plasmasphere
+	"""
 
 	ne_boundary = 100*(4/L)**4
 	psphere = np.where( ne_eq >= ne_boundary, True, False )
 	psphere = np.where( ne_eq < 0, True, psphere )
+	psphere = np.where( np.isnan(ne_eq), True, psphere )
 
 	return psphere
 
-# Estimates the equatorial density, ne_eq, based on L and R 
-# using the Denton et al., 2002 formulation
-# Returns an array, ne_eq
 def denton_ne_eq( ne, L, R ):
+	"""
+	denton_ne_eq( ne, L, R ):
+
+	Estimates the equatorial density, ne_eq, based on L and R 
+	using the Denton et al., 2002 formulation
+
+	Inputs: arrays of ne, L, R
+	Output: array of  ne_eq
+	"""
 
 	# Ignore warnings on log(<0)
 	old = np.seterr( invalid = 'ignore' )
@@ -65,8 +100,13 @@ def denton_ne_eq( ne, L, R ):
 	
 	return ne_eq
 
-# Plot Density as a function of L, color-coded by inside/outside plasmasphere
 def plot_density_psphere( nurd ):
+	"""
+	plot_density_psphere( nurd )
+
+	Make a plot of density as a function of L, color-coded by 
+	inside/outside plasmasphere
+	"""
 
 	fig = plt.figure()
 	ax = plt.gca()
@@ -88,9 +128,18 @@ def plot_density_psphere( nurd ):
 
 	return
 
-# Given a datestring in the form 'YYYYMMDD', read the nurd cdf file,
-# and find the plasmasphere
 def load_day( datestr ):
+	"""
+	load_day( datestr )
+
+	Given a datestring in the form 'YYYYMMDD', read the nurd cdf file,
+	and find the intervals inside the plasmasphere
+
+	Output: nurd dataframe with columns ['UT' [datetime], 'timestamp',
+					'L', 'MLT', 'MLAT', 'R', 'ne', 'ne_eq', 'psphere'] 
+					otherwise -1 if cdf file not found
+	"""
+
 	pathname='/Users/mystical/Work/Science/RBSP/DataCdf/rbsp-a/nurd/'
 	filename_start = 'rbsp-a_'
 	filename_end = '.cdf'
@@ -110,13 +159,21 @@ def load_day( datestr ):
 	return nurd 
 
 
+# SOME TESTING AND DEBUGGING
+
 #filename = 'rbsp-a_20140613_v1_3.cdf';
 #nurd = read_cdf( filename )
 #nurd['ne_eq'] = denton_ne_eq(nurd['ne'], nurd['L'], nurd['R'] );
 #nurd['psphere'] = find_psphere( nurd['ne_eq'], nurd['L'] );
 #plot_density_psphere(nurd)
 
-#nurd = load_day('20121010')
+#nurd = load_day('20131010')
 #plot_density_psphere(nurd)
-
+#plt.close()
+#nurd.loc[nurd['ne']==min(nurd['ne']), 'ne']=-1
+#plt.plot(nurd.UT, nurd['ne']/max(nurd['ne']), '.')
+#plt.plot(nurd.UT, nurd.psphere, '.')
+#plt.plot(nurd.UT, nurd['L']/max(nurd['L']), '.')
+#
+#plt.show(block=False)
 

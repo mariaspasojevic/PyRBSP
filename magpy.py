@@ -1,3 +1,11 @@
+"""
+magpy.py
+
+This module contains functionality for handling MAG data from the
+RBSP EMFISIS intrument
+
+http://emfisis.physics.uiowa.edu/
+"""
 import os
 import glob
 import time
@@ -7,10 +15,19 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from spacepy import pycdf
 
-# Read CDF file and create MAG dataframe
 def read_cdf( filename, \
 	pathname = '/Users/mystical/Work/Science/RBSP/DataCdf/rbsp-a/' + \
 	'mag_4sec_sm_L3/'):
+	""" 
+	read_cdf( filename, pathname = [default location])
+
+	Reads MAG cdf file as downloaded from
+	from: http://emfisis.physics.uiowa.edu/data/index
+
+	Input: filename, pathname strings
+	Output: mag dataframe with columns ['UT', 'timestamp', 'Bt' in nT, 
+		'x_sm', 'y_sm', 'z_sm', 'L', 'mlat', 'mlt']
+	"""
 
 	fullpath_filename = pathname + filename
 	if not os.path.isfile( fullpath_filename ):
@@ -51,8 +68,16 @@ def read_cdf( filename, \
 
 	return mag
 
-# Clean 2 types of corrupted data. Bt < 0 and single point positive spikes.
 def clean( mag ):
+	"""
+	clean( mag )
+
+  Clean two types of corrupted mag data. Bt < 0 and single point 
+	positive spikes.
+
+	Input mag dataframe
+	Output cleaned mag dataframe
+	"""
 	
 	# Remove rows where Bt < 0
 	# Same as mag = mag[mag.Bt>0]
@@ -64,9 +89,17 @@ def clean( mag ):
 	
 	return mag
 
-# Calculate the local (fce) and 
-# equatorial (fce_eq) electron cyclotron frequencies 
 def calc_fce( mag ):
+	"""
+	calc_fce( mag ):
+
+	Calculate the local (fce) and then estimate the equatorial (fce_eq) 
+	electron cyclotron frequency assuming that the variation along the
+	field line is dipolar.
+
+	Input: mag dataframe
+	Output: mag dataframe with columns added as 'fce', 'fce_eq'
+	"""
 
 	q = 1.602e-19;
 	me = 9.109e-31;
@@ -82,8 +115,8 @@ def calc_fce( mag ):
 
 	return mag
 	
-# Create plot of BB as a function of freq and UT
 def plot_mag( mag, fignum=1 ):
+	""" plot_mag( mag, fignum=1 ),  Create plot of Bt """
 
 	plt.ion()
 	fig = plt.figure(fignum)
@@ -103,8 +136,9 @@ def plot_mag( mag, fignum=1 ):
 
 	ax.set_title('RBSP-a EMFISIS MAG')
 
-# Create plot of ephemeris data
 def plot_orbit( mag, fignum=2 ):
+	""" plot_mag( mag, fignum=1 ), Create plot of ephemeris data """
+
 	plt.ion()
 	fig = plt.figure(fignum)
 	fig.clf()
@@ -140,9 +174,15 @@ def plot_orbit( mag, fignum=2 ):
 
 	ax_list[0].set_title('RBSP-a EMFISIS MAG')
 
-# Given a datestring in the form 'YYYYMMDD', read the mag cdf file,
-# clean, calculate fce, return mag dataframe
 def load_day( datestr ):
+	"""
+	load_day( datestr )
+
+	Give a datestr as 'YYYYMMDD' finds the corresponding MAG file
+	loads it, cleans it, calculates fce and fce_eq and returns the mag
+	dataframe otherwise returns -1 if no file is available
+	"""
+
 	pathname = '/Users/mystical/Work/Science/RBSP/DataCdf/rbsp-a/mag_4sec_sm_L3/'
 	filename_start = 'rbsp-a_magnetometer_4sec-sm_emfisis-L3_'
 	filename_end = '.cdf'
@@ -163,7 +203,7 @@ def load_day( datestr ):
 
 # exec(open('magpy.py').read())
 
-# THIS IS SO BIZARRE. pycdf.CDF CRAPS OUT IN THIS LOOP
+# DEBUGGING AND TESTING
 #
 #pathname = '/Users/mystical/data/spacecraft/rbsp/rbsp-a/mag_4sec_sm_L3/'
 #pathname = '/Users/mystical/Work/Science/RBSP/DataCdf/rbsp-a/' + \
